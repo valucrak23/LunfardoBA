@@ -188,7 +188,7 @@ const EventoForm = () => {
 
       <div className="detail-view">
         <div className="detail-card">
-          <h1>{isEditing ? 'Editar Evento' : 'Nuevo Evento'}</h1>
+          <h1 className="page-title">{isEditing ? 'Editar Evento' : 'Nuevo Evento'}</h1>
 
           {msg && (
             <div className={`msg ${msg.includes('Error') ? 'error-msg' : 'success-msg'}`}>

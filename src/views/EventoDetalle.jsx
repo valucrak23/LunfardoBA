@@ -1,11 +1,12 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import { eventosService } from '../services/eventosService';
+import { useState, useEffect, useContext } from 'react';
+import DataCacheContext from '../context/DataCacheContext';
 import Loading from '../components/Loading';
 
 const EventoDetalle = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { eventsById, getEventById } = useContext(DataCacheContext);
   const [evento, setEvento] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -16,8 +17,14 @@ const EventoDetalle = () => {
   const loadEvento = async () => {
     try {
       setLoading(true);
-      const response = await eventosService.getById(id);
-      setEvento(response?.data || response);
+      // usar caché si existe, sino traer y guardar
+      const cached = eventsById?.[id];
+      if (cached && cached.descripcion) {
+        setEvento(cached);
+      } else {
+        const ev = await getEventById(id);
+        setEvento(ev);
+      }
     } catch (error) {
       console.error('Error al cargar evento:', error);
     } finally {

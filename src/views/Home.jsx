@@ -1,13 +1,14 @@
 import Loading from "../components/Loading"
 import { AuthContext } from "../context/AuthContext"
 import { useState, useEffect, useContext } from 'react'
-import { eventosService } from '../services/eventosService'
 import { categoriasService } from '../services/categoriasService'
 import { NavLink, useNavigate } from 'react-router-dom'
 import CustomSelect from '../components/CustomSelect'
+import DataCacheContext from '../context/DataCacheContext'
 
 const Home = () => {
   const { token, user } = useContext(AuthContext);
+  const { eventsList, loadEventsList } = useContext(DataCacheContext);
   const navigate = useNavigate();
   const [eventos, setEventos] = useState([]);
   const [categorias, setCategorias] = useState([]);
@@ -23,13 +24,11 @@ const Home = () => {
   const loadEventos = async () => {
     try {
       setLoading(true);
-      const response = await eventosService.getAll();
-      // La API devuelve { msg, data, total, filtros_aplicados }
-      const eventosData = response?.data || [];
-      setEventos(eventosData);
+      const list = await loadEventsList(false);
+      setEventos(Array.isArray(list) ? list : (eventsList || []));
     } catch (error) {
       console.error('Error al cargar eventos:', error);
-      setEventos([]);
+      setEventos(Array.isArray(eventsList) ? eventsList : []);
     } finally {
       setLoading(false);
     }
@@ -139,7 +138,7 @@ const Home = () => {
 
   return (
     <main className='container'>
-      <h1>Lunfardo</h1>
+      <h1 className="home-title">Lunfardo</h1>
       <p className="subtitle">Descubre recitales, eventos culturales y talleres en la ciudad</p>
 
       {!token && (

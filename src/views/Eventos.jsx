@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import DataCacheContext from '../context/DataCacheContext';
 import { eventosService } from '../services/eventosService';
 import { categoriasService } from '../services/categoriasService';
 import Loading from '../components/Loading';
@@ -9,6 +10,7 @@ import ConfirmModal from '../components/ConfirmModal';
 
 const Eventos = () => {
   const { token } = useContext(AuthContext);
+  const { eventsList, loadEventsList, removeEvent } = useContext(DataCacheContext);
   const navigate = useNavigate();
   const [eventos, setEventos] = useState([]);
   const [categorias, setCategorias] = useState([]);
@@ -32,9 +34,8 @@ const Eventos = () => {
   const loadEventos = async () => {
     try {
       setLoading(true);
-      const response = await eventosService.getAll();
-      // La API devuelve { msg, data, total, filtros_aplicados }
-      setEventos(response?.data || []);
+      const list = await loadEventsList(false);
+      setEventos(Array.isArray(list) ? list : (eventsList || []));
     } catch (error) {
       setMsg('Error al cargar eventos: ' + error.message);
     } finally {
@@ -69,7 +70,8 @@ const Eventos = () => {
     try {
       await eventosService.delete(eventoToDelete);
       setMsg('Evento eliminado correctamente');
-      loadEventos();
+      removeEvent(eventoToDelete);
+      setEventos(prev => prev.filter(e => e._id !== eventoToDelete));
       setShowDeleteConfirm(false);
       setEventoToDelete(null);
     } catch (error) {
@@ -189,7 +191,7 @@ const Eventos = () => {
 
   return (
     <main className="container">
-      <h1>🎭 Gestión de Eventos</h1>
+      <h1 className="page-title">🎭 Gestión de Eventos</h1>
 
       {msg && (
         <div className={`msg ${msg.includes('Error') ? 'error-msg' : 'success-msg'}`}>

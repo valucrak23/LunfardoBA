@@ -71,7 +71,7 @@ const Categorias = () => {
 
   return (
     <main className="container">
-      <h1>🏷️ Gestión de Categorías</h1>
+      <h1 className="page-title">🏷️ Gestión de Categorías</h1>
 
       {msg && (
         <div className={`msg ${msg.includes('Error') ? 'error-msg' : 'success-msg'}`}>

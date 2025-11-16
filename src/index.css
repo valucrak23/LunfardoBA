@@ -5,19 +5,19 @@
   --oscuro: #3a3a3a;
 
   --app-grey: #e8e8e8;
-  --azul: #6b9bd1;
-  --azul-hover: #5a8bc0;
+  --azul: #5a78ff;
+  --azul-hover: #4a68f0;
   --verde: #7fb8a1;
-  --rosa: #d4a5b8;
-  --lila: #a8a8d0;
+  --rosa: #c0c0c0; /* desactivado (no usar) */
+  --lila: #9aa5ff;
   --laranja: #d4a574;
   --amarelo: #d4c4a5;
   
   /* Colores más vibrantes pero relajantes */
-  --lila-vibrante: #9b7dd4;
-  --azul-vibrante: #7ba3d4;
+  --lila-vibrante: #7f8cff;
+  --azul-vibrante: #6e8fff;
   --verde-vibrante: #8fc5a8;
-  --rosa-vibrante: #d89bb0;
+  --rosa-vibrante: #b0b0b0; /* desactivado (no usar) */
   
   /* BB-8 Loader Colors */
   --color-lines: #DDDDDD;
@@ -27,11 +27,11 @@
 
   /* Neumorphic Design Variables - Colores Pastel */
   --ruler: 16px;
-  --neu-bg: #FFF5F8;
-  --neu-shadow: rgba(233, 30, 99, 0.2);
-  --neu-white: #FFF0F5;
-  --neu-red: #AE1100;
-  --neu-text: #C2185B;
+  --neu-bg: #F6F7FF;           /* claro azulado */
+  --neu-shadow: rgba(90, 120, 255, 0.20); /* sombra celeste-violeta */
+  --neu-white: #EEF1FF;        /* “alto” claro azulado */
+  --neu-red: #5a78ff;          /* reutilizado como primario azul */
+  --neu-text: #2c326f;         /* texto violeta-azulado */
 
 }
 
@@ -53,6 +53,7 @@ body {
   min-height: 100vh;
   color: #2a2a2a;
   background-color: var(--neu-bg);
+  position: relative;
 }
 
 body, p, input, select, textarea, button {
@@ -69,4 +70,150 @@ button {
 
 .rounded {
   border-radius: 100vh;
+}
+
+/* ===== Tema oscuro violeta (activado por el switch) ===== */
+body:has(.switch__input:checked) {
+  /* Base violeta azulado (sin rojos/rosas) */
+  --neu-bg: #0f0b1b;
+  --neu-white: #1b1530;
+  --neu-shadow: rgba(120, 90, 200, 0.25);
+  --neu-text: #d8d2ff;
+  /* Loader BB-8 en oscuro: negro en vez de blanco */
+  --color-bb8-main: #000000;
+  --color-lines: #000000;
+  color: var(--neu-text);
+  background-color: var(--neu-bg);
+}
+
+/* Refuerzos para caret en dark (evitar repetición) */
+body:has(.switch__input:checked) select {
+  background-repeat: no-repeat !important;
+  background-position: right 1rem center !important;
+  background-size: 12px 12px !important;
+}
+body:has(.switch__input:checked) .detail-item select {
+  background-repeat: no-repeat !important;
+  background-position: right 1rem center !important;
+  background-size: 12px 12px !important;
+}
+
+/* ===== Transición lateral entre temas (reveal) ===== */
+:root {
+  --theme-wipe-dur: 1200ms;
+  --theme-wipe-ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --stagger-dur: 1100ms;
+  --radial-dur: 1400ms;
+}
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: var(--wipe-bg, var(--neu-bg));
+  transform: scaleX(0);
+  transform-origin: left center;
+  opacity: 0;
+  transition:
+    transform var(--theme-wipe-dur) var(--theme-wipe-ease),
+    opacity 600ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  z-index: 9999;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+body.theme-reveal-left::after { transform-origin: left center; }
+body.theme-reveal-right::after { transform-origin: right center; }
+/* Estado inicial cubierto; al remover esta clase, se revela el nuevo tema */
+body.theme-reveal-start::after {
+  transform: scaleX(1);
+  opacity: 1;
+}
+
+/* ===== Transición escalonada de propiedades de color ===== */
+@media (prefers-reduced-motion: no-preference) {
+  body.theme-stagger * {
+    transition:
+      background-color var(--stagger-dur) cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      color var(--stagger-dur) cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      border-color var(--stagger-dur) cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      box-shadow var(--stagger-dur) cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      fill var(--stagger-dur) cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      stroke var(--stagger-dur) cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      opacity var(--stagger-dur) cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      transform calc(var(--stagger-dur) * 0.8) cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  /* Delays por grupo (4 partes) - más graduales y fluidos */
+  body.theme-stagger header,
+  body.theme-stagger nav {
+    transition-delay: 0ms;
+  }
+  body.theme-stagger .evento-card,
+  body.theme-stagger .evento-card-home,
+  body.theme-stagger .categoria-card,
+  body.theme-stagger .detail-card,
+  body.theme-stagger .form-wrapper,
+  body.theme-stagger .eventos-grid,
+  body.theme-stagger .container {
+    transition-delay: 250ms;
+  }
+  body.theme-stagger footer {
+    transition-delay: 500ms;
+  }
+  
+  /* Dark → Light: transición rápida sin radial, orden invertido (fluida) */
+  body.theme-reverse-stagger * {
+    transition:
+      background-color 550ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      color 550ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      border-color 550ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      box-shadow 550ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      fill 550ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      stroke 550ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      opacity 550ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  /* Orden invertido: footer primero, luego cards, luego nav */
+  body.theme-reverse-stagger footer {
+    transition-delay: 0ms;
+  }
+  body.theme-reverse-stagger .evento-card,
+  body.theme-reverse-stagger .evento-card-home,
+  body.theme-reverse-stagger .categoria-card,
+  body.theme-reverse-stagger .detail-card,
+  body.theme-reverse-stagger .form-wrapper,
+  body.theme-reverse-stagger .eventos-grid,
+  body.theme-reverse-stagger .container {
+    transition-delay: 120ms;
+  }
+  body.theme-reverse-stagger header,
+  body.theme-reverse-stagger nav {
+    transition-delay: 240ms;
+  }
+}
+
+/* ===== Fondo radial desde el centro (líquido) ===== */
+@media (prefers-reduced-motion: no-preference) {
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: var(--wipe-bg, var(--neu-bg));
+    clip-path: circle(0% at 50% 50%);
+    opacity: 0;
+    transition:
+      clip-path var(--radial-dur) cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      opacity 700ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    z-index: -1; /* detrás de todo el contenido */
+    pointer-events: none;
+    will-change: clip-path, opacity;
+    filter: blur(0px);
+  }
+  /* Cubrir con el color previo; luego se remueve para revelar desde el centro */
+  body.theme-radial-start::before {
+    clip-path: circle(150% at 50% 50%);
+    opacity: 1;
+  }
+}
+
+/* Durante el radial, hacer transparente el fondo del body para que se vea el pseudo-elemento detrás */
+body.theme-bg-transparent {
+  background-color: transparent !important;
 }
