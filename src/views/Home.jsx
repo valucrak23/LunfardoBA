@@ -4,6 +4,7 @@ import { useState, useEffect, useContext } from 'react'
 import { eventosService } from '../services/eventosService'
 import { categoriasService } from '../services/categoriasService'
 import { NavLink, useNavigate } from 'react-router-dom'
+import CustomSelect from '../components/CustomSelect'
 
 const Home = () => {
   const { token, user } = useContext(AuthContext);
@@ -154,21 +155,31 @@ const Home = () => {
       )}
 
       <div className="filtros">
-        <select value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)}>
-          <option value="Todos">Todos los tipos</option>
-          <option value="recital">🎵 Recitales</option>
-          <option value="evento_cultural">🎨 Eventos Culturales</option>
-          <option value="taller">📚 Talleres</option>
-        </select>
+        <CustomSelect
+          value={filtroTipo}
+          onChange={setFiltroTipo}
+          placeholder="Todos los tipos"
+          options={[
+            { value: 'Todos', label: 'Todos los tipos' },
+            { value: 'recital', label: 'Recitales', icon: '🎵' },
+            { value: 'evento_cultural', label: 'Eventos Culturales', icon: '🎨' },
+            { value: 'taller', label: 'Talleres', icon: '📚' },
+          ]}
+        />
 
-        <select value={filtroCategoria} onChange={(e) => setFiltroCategoria(e.target.value)}>
-          <option value="Todas">Todas las categorías</option>
-          {categorias.map(cat => (
-            <option key={cat._id} value={cat._id}>
-              {cat.icono} {cat.nombre}
-            </option>
-          ))}
-        </select>
+        <CustomSelect
+          value={filtroCategoria}
+          onChange={setFiltroCategoria}
+          placeholder="Todas las categorías"
+          options={[
+            { value: 'Todas', label: 'Todas las categorías' },
+            ...categorias.map(cat => ({
+              value: cat._id,
+              label: cat.nombre,
+              icon: cat.icono || '🏷️'
+            }))
+          ]}
+        />
       </div>
 
       {loading ? (

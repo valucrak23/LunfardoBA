@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { categoriasService } from '../services/categoriasService';
 import Loading from '../components/Loading';
+import ConfirmModal from '../components/ConfirmModal';
 
 const Categorias = () => {
   const { token } = useContext(AuthContext);
@@ -10,6 +11,8 @@ const Categorias = () => {
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [categoriaToDelete, setCategoriaToDelete] = useState(null);
 
 
   useEffect(() => {
@@ -36,17 +39,24 @@ const Categorias = () => {
     navigate(`/categoria/editar/${categoria._id}`);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('¿Estás seguro de eliminar esta categoría?')) {
-      return;
-    }
+  const handleDelete = (id) => {
+    setCategoriaToDelete(id);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!categoriaToDelete) return;
 
     try {
-      await categoriasService.delete(id);
+      await categoriasService.delete(categoriaToDelete);
       setMsg('Categoría eliminada correctamente');
       loadCategorias();
+      setShowDeleteConfirm(false);
+      setCategoriaToDelete(null);
     } catch (error) {
       setMsg('Error al eliminar: ' + error.message);
+      setShowDeleteConfirm(false);
+      setCategoriaToDelete(null);
     }
   };
 
@@ -117,6 +127,17 @@ const Categorias = () => {
           )}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setCategoriaToDelete(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        title="Eliminar Categoría"
+        message="¿Estás seguro de que deseas eliminar esta categoría? Esta acción no se puede deshacer."
+      />
     </main>
   );
 };

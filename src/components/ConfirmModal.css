@@ -1,0 +1,61 @@
+.confirm-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(4px);
+}
+
+.confirm-modal-content {
+  background: var(--neu-bg);
+  border-radius: 1.5rem;
+  padding: 2rem;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: .3rem .3rem .6rem rgba(233, 30, 99, 0.15), -.2rem -.2rem .5rem var(--neu-white);
+  animation: modalAppear 0.2s ease;
+}
+
+@keyframes modalAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.confirm-modal-title {
+  color: var(--neu-text);
+  font-size: 1.25rem;
+  margin: 0 0 1rem 0;
+  font-weight: 600;
+}
+
+.confirm-modal-message {
+  color: var(--neu-text);
+  font-size: 1rem;
+  margin: 0 0 1.5rem 0;
+  line-height: 1.5;
+  opacity: 0.9;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.confirm-modal-actions .btn-primary,
+.confirm-modal-actions .btn-secondary {
+  min-width: 100px;
+}
+

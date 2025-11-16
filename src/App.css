@@ -1,3 +1,8 @@
+/* ========== MODAL OPEN (BLOQUEAR SCROLL) ========== */
+body.modal-open {
+  overflow: hidden;
+}
+
 /* ========== LOADER BB-8 (MANTENER) ========== */
 .loading-container {
   width: 100%;
@@ -216,6 +221,7 @@ nav h1 {
   display: flex;
   align-items: center;
   gap: 1rem;
+  position: relative;
 }
 
 .user-info p {
@@ -224,29 +230,225 @@ nav h1 {
   font-size: 0.9rem;
 }
 
-.user-info .user-image {
-  width: 40px;
-  height: 40px;
-  background-color: var(--neu-bg);
-  background-image: url('/user.png');
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: cover;
-  border-radius: 50%;
+.user-menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background: var(--neu-bg);
+  border-radius: 1rem;
+  box-shadow: .3rem .3rem .6rem rgba(233, 30, 99, 0.15), -.2rem -.2rem .5rem var(--neu-white);
+  padding: 1rem;
+  min-width: 200px;
+  z-index: 1000;
+  animation: menuAppear 0.2s ease;
+}
+
+@keyframes menuAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.user-menu-header {
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(233, 30, 99, 0.1);
+  margin-bottom: 0.75rem;
+}
+
+.user-menu-name {
+  color: var(--neu-text);
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+}
+
+.user-menu-email {
+  color: var(--neu-text);
+  font-size: 0.85rem;
+  opacity: 0.7;
+  margin: 0;
+}
+
+.user-menu-logout {
+  width: 100%;
+  background: var(--neu-bg);
+  color: var(--neu-text);
+  padding: 0.6rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.9rem;
+  border: none;
   box-shadow: .3rem .3rem .6rem rgba(233, 30, 99, 0.15), -.2rem -.2rem .5rem var(--neu-white);
   cursor: pointer;
   transition: all 0.2s ease;
+  font-weight: 500;
 }
 
-.user-info .user-image:hover {
+.user-menu-logout:hover {
   box-shadow: .2rem .2rem .4rem rgba(233, 30, 99, 0.12), -.1rem -.1rem .3rem var(--neu-white);
-  transform: scale(1.05);
 }
 
-.user-info .user-image:active {
+.user-menu-logout:active {
   box-shadow: inset .2rem .2rem .5rem rgba(233, 30, 99, 0.1), inset -.2rem -.2rem .5rem var(--neu-white);
-  transform: scale(0.95);
 }
+
+.user-info .user-avatar {
+  width: 45px;
+  height: 45px;
+  background: linear-gradient(135deg, rgba(233, 30, 99, 0.2) 0%, rgba(194, 24, 91, 0.15) 100%);
+  border-radius: 50%;
+  box-shadow: .3rem .3rem .6rem rgba(233, 30, 99, 0.15), -.2rem -.2rem .5rem var(--neu-white),
+              inset 0.1rem 0.1rem 0.3rem rgba(233, 30, 99, 0.1), inset -0.1rem -0.1rem 0.3rem var(--neu-white);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.user-info .user-avatar::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(233, 30, 99, 0.3) 0%, transparent 70%);
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+.user-info .user-avatar:hover::before {
+  width: 100%;
+  height: 100%;
+}
+
+.user-info .user-avatar:hover {
+  box-shadow: .2rem .2rem .4rem rgba(233, 30, 99, 0.12), -.1rem -.1rem .3rem var(--neu-white),
+              inset 0.05rem 0.05rem 0.2rem rgba(233, 30, 99, 0.08), inset -0.05rem -0.05rem 0.2rem var(--neu-white);
+  transform: scale(1.08) rotate(5deg);
+}
+
+.user-info .user-avatar:active {
+  box-shadow: inset .2rem .2rem .5rem rgba(233, 30, 99, 0.1), inset -.2rem -.2rem .5rem var(--neu-white);
+  transform: scale(0.95) rotate(0deg);
+}
+
+.user-info .user-avatar-initials {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--neu-text);
+  text-shadow: 0.5px 0.5px 1px rgba(255, 240, 245, 0.5);
+  z-index: 1;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.user-info .user-avatar:hover .user-avatar-initials {
+  transform: scale(1.1);
+  color: var(--neu-text);
+}
+
+/* ========== CHECKBOX NEUMÓRFICO SIMPLE ========== */
+.neo-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: .6rem;
+  cursor: pointer;
+  user-select: none;
+}
+.neo-checkbox input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.neo-checkbox-box {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: .4rem;
+  background: var(--neu-bg);
+  box-shadow: inset .2rem .2rem .5rem rgba(233, 30, 99, 0.1), inset -.2rem -.2rem .5rem var(--neu-white);
+  display: inline-block;
+  position: relative;
+  transition: all .15s ease;
+}
+.neo-checkbox input:checked + .neo-checkbox-box {
+  box-shadow: .2rem .2rem .4rem rgba(233, 30, 99, 0.12), -.1rem -.1rem .3rem var(--neu-white);
+}
+.neo-checkbox input:checked + .neo-checkbox-box::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0px;
+  width: 8px;
+  height: 12px;
+  border: solid var(--neu-text);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.neo-checkbox-text {
+  color: var(--neu-text);
+}
+
+/* ========== CUSTOM SELECT (SIMPLE) ========== */
+.custom-select { position: relative; min-width: 200px; z-index: 1; }
+.custom-select.open { z-index: 3000; }
+
+.custom-select-trigger {
+  width: 100%;
+  background: var(--neu-bg);
+  color: var(--neu-text);
+  padding: 0.6rem 2rem 0.6rem 0.9rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(233, 30, 99, 0.15);
+  box-shadow: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.custom-select-text { display: inline-flex; align-items: center; gap: .35rem; }
+.custom-select-text.placeholder { opacity: .75; }
+.custom-select-caret { margin-left: .75rem; opacity: .75; }
+
+.custom-select-dropdown {
+  position: absolute;
+  top: calc(100% + .4rem);
+  left: 0; right: 0;
+  z-index: 1000;
+  background: var(--neu-bg);
+  border: 1px solid rgba(233, 30, 99, 0.15);
+  border-radius: 0.75rem;
+  box-shadow: none;
+  padding: .25rem;
+  max-height: 260px;
+  overflow: auto;
+}
+
+.custom-select-option {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: .5rem;
+  padding: .5rem .6rem;
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  color: var(--neu-text);
+  cursor: pointer;
+}
+.custom-select-option:hover { background: rgba(233, 30, 99, 0.08); }
+.custom-select-option.selected { background: rgba(233, 30, 99, 0.12); font-weight: 600; }
+.custom-select-icon { display: none; } /* simplificado: sin iconos en el menú */
 
 .user-info button {
   background: var(--neu-bg);
@@ -503,23 +705,32 @@ select {
   background-repeat: no-repeat;
   background-position: right 1rem center;
   padding-right: 2.5rem;
+  border: none !important;
+  outline: none !important;
 }
 
 select:hover {
-  outline: none;
+  outline: none !important;
+  border: none !important;
   box-shadow: inset .15rem .15rem .4rem rgba(233, 30, 99, 0.12), inset -.15rem -.15rem .4rem var(--neu-white);
 }
 
 select:focus {
-  outline: none;
+  outline: none !important;
+  border: none !important;
   box-shadow: .3rem .3rem .6rem rgba(233, 30, 99, 0.15), -.2rem -.2rem .5rem var(--neu-white);
+}
+
+select:active {
+  outline: none !important;
+  border: none !important;
 }
 
 /* Estilos para las opciones del select */
 select option {
   padding: 0.75rem 1rem;
-  background: var(--neu-bg);
-  color: var(--neu-text);
+  background: var(--neu-bg) !important;
+  color: var(--neu-text) !important;
   border: none !important;
   border-top: none !important;
   border-bottom: none !important;
@@ -527,16 +738,45 @@ select option {
   border-right: none !important;
   border-radius: 0.5rem;
   margin: 0.25rem 0;
-  outline: none;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 select option:hover {
-  background: rgba(233, 30, 99, 0.1);
+  background: rgba(233, 30, 99, 0.1) !important;
 }
 
 select option:checked {
-  background: rgba(233, 30, 99, 0.2);
-  color: var(--neu-text);
+  background: rgba(233, 30, 99, 0.2) !important;
+  color: var(--neu-text) !important;
+}
+
+select option:focus {
+  outline: none !important;
+  border: none !important;
+}
+
+/* Eliminar bordes del dropdown del select en diferentes navegadores */
+select::-ms-expand {
+  display: none;
+}
+
+@supports (-webkit-appearance: none) {
+  select {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+  }
+}
+
+/* Para Firefox */
+@-moz-document url-prefix() {
+  select {
+    border: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23C2185B' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    padding-right: 2.5rem;
+  }
 }
 
 input:focus,

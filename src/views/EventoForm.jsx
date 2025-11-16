@@ -288,7 +288,7 @@ const EventoForm = () => {
 
             <div className="detail-item">
               <strong>Precio</strong>
-              <div className="checkbox-group">
+              <label className="neo-checkbox">
                 <input
                   type="checkbox"
                   name="esGratuito"
@@ -296,8 +296,9 @@ const EventoForm = () => {
                   checked={formData.esGratuito}
                   onChange={handleInputChange}
                 />
-                <label htmlFor="esGratuito">Evento gratuito</label>
-              </div>
+                <span className="neo-checkbox-box" aria-hidden="true"></span>
+                <span className="neo-checkbox-text">Evento gratuito</span>
+              </label>
               {!formData.esGratuito && (
                 <input
                   type="number"

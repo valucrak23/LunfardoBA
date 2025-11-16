@@ -4,6 +4,8 @@ import { AuthContext } from '../context/AuthContext';
 import { eventosService } from '../services/eventosService';
 import { categoriasService } from '../services/categoriasService';
 import Loading from '../components/Loading';
+import CustomSelect from '../components/CustomSelect';
+import ConfirmModal from '../components/ConfirmModal';
 
 const Eventos = () => {
   const { token } = useContext(AuthContext);
@@ -14,6 +16,8 @@ const Eventos = () => {
   const [msg, setMsg] = useState(null);
   const [filtroTipo, setFiltroTipo] = useState('Todos');
   const [filtroCategoria, setFiltroCategoria] = useState('Todas');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [eventoToDelete, setEventoToDelete] = useState(null);
 
 
   useEffect(() => {
@@ -54,17 +58,24 @@ const Eventos = () => {
     navigate(`/evento/editar/${evento._id}`);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('¿Estás seguro de eliminar este evento?')) {
-      return;
-    }
+  const handleDelete = (id) => {
+    setEventoToDelete(id);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!eventoToDelete) return;
 
     try {
-      await eventosService.delete(id);
+      await eventosService.delete(eventoToDelete);
       setMsg('Evento eliminado correctamente');
       loadEventos();
+      setShowDeleteConfirm(false);
+      setEventoToDelete(null);
     } catch (error) {
       setMsg('Error al eliminar: ' + error.message);
+      setShowDeleteConfirm(false);
+      setEventoToDelete(null);
     }
   };
 
@@ -187,21 +198,31 @@ const Eventos = () => {
       )}
 
       <div className="filtros">
-        <select value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)}>
-          <option value="Todos">Todos los tipos</option>
-          <option value="recital">🎵 Recitales</option>
-          <option value="evento_cultural">🎨 Eventos Culturales</option>
-          <option value="taller">📚 Talleres</option>
-        </select>
+        <CustomSelect
+          value={filtroTipo}
+          onChange={setFiltroTipo}
+          placeholder="Todos los tipos"
+          options={[
+            { value: 'Todos', label: 'Todos los tipos' },
+            { value: 'recital', label: 'Recitales', icon: '🎵' },
+            { value: 'evento_cultural', label: 'Eventos Culturales', icon: '🎨' },
+            { value: 'taller', label: 'Talleres', icon: '📚' },
+          ]}
+        />
 
-        <select value={filtroCategoria} onChange={(e) => setFiltroCategoria(e.target.value)}>
-          <option value="Todas">Todas las categorías</option>
-          {categorias.map(cat => (
-            <option key={cat._id} value={cat._id}>
-              {cat.icono} {cat.nombre}
-            </option>
-          ))}
-        </select>
+        <CustomSelect
+          value={filtroCategoria}
+          onChange={setFiltroCategoria}
+          placeholder="Todas las categorías"
+          options={[
+            { value: 'Todas', label: 'Todas las categorías' },
+            ...categorias.map(cat => ({
+              value: cat._id,
+              label: cat.nombre,
+              icon: cat.icono || '🏷️'
+            }))
+          ]}
+        />
 
         <button 
           onClick={() => navigate('/evento/nuevo')}
@@ -253,6 +274,16 @@ const Eventos = () => {
         </div>
       )}
 
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setEventoToDelete(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        title="Eliminar Evento"
+        message="¿Estás seguro de que deseas eliminar este evento? Esta acción no se puede deshacer."
+      />
     </main>
   );
 };
