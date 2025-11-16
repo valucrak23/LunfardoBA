@@ -20,9 +20,9 @@
   --rosa-vibrante: #b0b0b0; /* desactivado (no usar) */
   
   /* BB-8 Loader Colors */
-  --color-lines: #DDDDDD;
-  --color-bb8-main: #FFFFFF;
-  --color-bb8-orange: #FFA229;
+  --color-bb8-main: #000000;
+  --color-lines: #000000;
+  --color-bb8-orange: #d30808;
   --color-bb8-eye: #555555;
 
   /* Neumorphic Design Variables - Colores Pastel */
@@ -80,8 +80,10 @@ body:has(.switch__input:checked) {
   --neu-shadow: rgba(120, 90, 200, 0.25);
   --neu-text: #d8d2ff;
   /* Loader BB-8 en oscuro: negro en vez de blanco */
-  --color-bb8-main: #000000;
-  --color-lines: #000000;
+  --color-lines: #DDDDDD;
+  --color-bb8-main: #FFFFFF;
+  --color-bb8-orange: #FFA229;
+  --color-bb8-eye: #555555;
   color: var(--neu-text);
   background-color: var(--neu-bg);
 }

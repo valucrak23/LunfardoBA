@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import DataCacheContext from '../context/DataCacheContext';
 import { eventosService } from '../services/eventosService';
 import { categoriasService } from '../services/categoriasService';
 import Loading from '../components/Loading';
@@ -9,6 +10,7 @@ const EventoForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { token } = useContext(AuthContext);
+  const { loadEventsList, upsertEvent, invalidateEvents } = useContext(DataCacheContext);
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState(null);
@@ -18,7 +20,8 @@ const EventoForm = () => {
     titulo: '',
     descripcion: '',
     tipo: 'recital',
-    categoria: '',
+    categorias: [], // Array de IDs de categorías seleccionadas
+    categoriaPredominante: '', // ID de la categoría predominante
     fecha: '',
     hora: '',
     nombreLugar: '',
@@ -28,6 +31,7 @@ const EventoForm = () => {
     recomendaciones: '',
     contacto: '',
     color: '#007bff',
+    colorManual: false, // Flag para saber si el color fue modificado manualmente
   });
 
   useEffect(() => {
@@ -36,10 +40,12 @@ const EventoForm = () => {
       return;
     }
     
-    loadCategorias();
-    if (isEditing) {
-      loadEvento();
-    }
+    // Cargar categorías primero, luego el evento si estamos editando
+    loadCategorias().then(() => {
+      if (isEditing) {
+        loadEvento();
+      }
+    });
   }, [id, token]);
 
   const loadEvento = async () => {
@@ -48,11 +54,27 @@ const EventoForm = () => {
       const response = await eventosService.getById(id);
       const evento = response?.data || response;
       
+      // Manejar múltiples categorías o categoría única (compatibilidad hacia atrás)
+      const categoriasIds = evento.categorias?.map(c => c._id || c) || 
+                           (evento.categoria?._id || evento.categoria ? [evento.categoria._id || evento.categoria] : []);
+      const categoriaPredominanteId = evento.categoriaPredominante?._id || evento.categoriaPredominante ||
+                                      (evento.categoria?._id || evento.categoria) || '';
+      
+      // Determinar si el color fue modificado manualmente
+      // Si el evento tiene color y es diferente al de la categoría predominante, fue manual
+      // Esperar a que las categorías estén cargadas
+      const categoriasCargadas = categorias.length > 0 ? categorias : await loadCategorias();
+      const categoriaPredominante = categoriasCargadas.find(c => c._id === categoriaPredominanteId);
+      const colorDeCategoria = categoriaPredominante?.color || '#007bff';
+      const colorEvento = evento.color || colorDeCategoria;
+      const colorManual = categoriaPredominanteId && colorEvento !== colorDeCategoria;
+      
       setFormData({
         titulo: evento.titulo || '',
         descripcion: evento.descripcion || '',
         tipo: evento.tipo || 'recital',
-        categoria: evento.categoria?._id || evento.categoria || '',
+        categorias: categoriasIds,
+        categoriaPredominante: categoriaPredominanteId,
         fecha: evento.fecha ? evento.fecha.split('T')[0] : '',
         hora: evento.hora || '',
         nombreLugar: evento.ubicacion?.nombre || evento.nombreLugar || '',
@@ -65,7 +87,8 @@ const EventoForm = () => {
             ? evento.recomendaciones.join(', ')
             : evento.informacionAdicional?.recomendaciones || evento.recomendaciones || '',
         contacto: evento.informacionAdicional?.contacto || evento.contacto || '',
-        color: evento.color || '#007bff',
+        color: colorEvento,
+        colorManual: colorManual,
       });
     } catch (error) {
       console.error('Error al cargar evento:', error);
@@ -79,17 +102,110 @@ const EventoForm = () => {
     try {
       const response = await categoriasService.getAll();
       setCategorias(response?.data || []);
+      return response?.data || [];
     } catch (error) {
       console.error('Error al cargar categorías:', error);
+      return [];
     }
   };
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+    
+    // Manejar cambios en categorías (checkboxes)
+    if (name === 'categoriaCheckbox') {
+      const categoriaId = value;
+      const categoriasActuales = formData.categorias || [];
+      let nuevasCategorias;
+      
+      if (checked) {
+        // Agregar categoría
+        nuevasCategorias = [...categoriasActuales, categoriaId];
+        // Si es la primera categoría seleccionada, marcarla como predominante
+        if (categoriasActuales.length === 0) {
+          setFormData({
+            ...formData,
+            categorias: nuevasCategorias,
+            categoriaPredominante: categoriaId,
+          });
+          // Actualizar color automáticamente
+          updateColorFromCategoria(categoriaId);
+          return;
+        }
+      } else {
+        // Remover categoría
+        nuevasCategorias = categoriasActuales.filter(id => id !== categoriaId);
+        // Si se deselecciona la predominante, elegir la primera disponible
+        if (formData.categoriaPredominante === categoriaId && nuevasCategorias.length > 0) {
+          const nuevaPredominante = nuevasCategorias[0];
+          setFormData({
+            ...formData,
+            categorias: nuevasCategorias,
+            categoriaPredominante: nuevaPredominante,
+          });
+          updateColorFromCategoria(nuevaPredominante);
+          return;
+        } else if (nuevasCategorias.length === 0) {
+          // Si no quedan categorías, limpiar predominante y color
+          setFormData({
+            ...formData,
+            categorias: [],
+            categoriaPredominante: '',
+            color: '#007bff',
+            colorManual: false,
+          });
+          return;
+        }
+      }
+      
+      setFormData({
+        ...formData,
+        categorias: nuevasCategorias,
+      });
+      return;
+    }
+    
+    // Manejar cambio de categoría predominante (radio buttons)
+    if (name === 'categoriaPredominante') {
+      setFormData({
+        ...formData,
+        categoriaPredominante: value,
+      });
+      // Actualizar color automáticamente si no fue modificado manualmente
+      if (!formData.colorManual) {
+        updateColorFromCategoria(value);
+      }
+      return;
+    }
+    
+    // Manejar cambio de color manual
+    if (name === 'color') {
+      setFormData({
+        ...formData,
+        color: value,
+        colorManual: true, // Marcar como cambio manual
+      });
+      return;
+    }
+    
+    // Otros campos normales
     setFormData({
       ...formData,
       [name]: type === 'checkbox' ? checked : value,
     });
+  };
+  
+  // Función para actualizar el color desde la categoría predominante
+  const updateColorFromCategoria = (categoriaId) => {
+    if (!categoriaId) return;
+    const categoria = categorias.find(c => c._id === categoriaId);
+    if (categoria?.color) {
+      setFormData(prev => ({
+        ...prev,
+        color: categoria.color,
+        colorManual: false, // Resetear flag al cambiar desde categoría
+      }));
+    }
   };
 
   const validateForm = () => {
@@ -129,11 +245,20 @@ const EventoForm = () => {
     }
 
     try {
+      // Validar que la categoría predominante esté en el array de categorías
+      if (formData.categoriaPredominante && !formData.categorias.includes(formData.categoriaPredominante)) {
+        setMsg('La categoría predominante debe estar seleccionada en las categorías');
+        return;
+      }
+      
       const eventoData = {
         titulo: formData.titulo,
         descripcion: formData.descripcion,
         tipo: formData.tipo,
-        categoria: formData.categoria || null,
+        categorias: formData.categorias || [],
+        categoriaPredominante: formData.categoriaPredominante || null,
+        // Mantener categoria para compatibilidad hacia atrás
+        categoria: formData.categoriaPredominante || null,
         fecha: formData.fecha,
         hora: formData.hora,
         ubicacion: {
@@ -154,13 +279,28 @@ const EventoForm = () => {
         color: formData.color || '#007bff'
       };
 
+      let eventoActualizado;
       if (isEditing) {
-        await eventosService.update(id, eventoData);
+        const response = await eventosService.update(id, eventoData);
+        eventoActualizado = response?.data || response;
         setMsg('Evento actualizado correctamente');
+        // Actualizar el evento en el caché con los datos frescos del servidor
+        if (eventoActualizado) {
+          upsertEvent(eventoActualizado);
+        }
       } else {
-        await eventosService.create(eventoData);
+        const response = await eventosService.create(eventoData);
+        eventoActualizado = response?.data || response;
         setMsg('Evento creado correctamente');
+        // Agregar el nuevo evento al caché
+        if (eventoActualizado) {
+          upsertEvent(eventoActualizado);
+        }
       }
+
+      // Invalidar caché y forzar refresh de la lista para obtener datos actualizados con categorías populadas
+      invalidateEvents();
+      await loadEventsList(true);
 
       setTimeout(() => {
         navigate('/eventos');
@@ -230,15 +370,45 @@ const EventoForm = () => {
             </div>
 
             <div className="detail-item">
-              <strong>Categoría</strong>
-              <select id="categoria" name="categoria" value={formData.categoria} onChange={handleInputChange}>
-                <option value="">Sin categoría</option>
+              <strong>Categorías</strong>
+              <p style={{ fontSize: '0.85rem', opacity: 0.8, marginBottom: '0.5rem' }}>
+                Selecciona una o más categorías. La primera seleccionada será la predominante (define el color por defecto).
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '200px', overflowY: 'auto', padding: '0.5rem', background: 'var(--neu-bg)', borderRadius: '0.75rem' }}>
                 {categorias.map(cat => (
-                  <option key={cat._id} value={cat._id}>
-                    {cat.icono} {cat.nombre}
-                  </option>
+                  <label key={cat._id} className="neo-checkbox" style={{ cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      name="categoriaCheckbox"
+                      value={cat._id}
+                      checked={formData.categorias.includes(cat._id)}
+                      onChange={handleInputChange}
+                    />
+                    <span className="neo-checkbox-box" aria-hidden="true"></span>
+                    <span className="neo-checkbox-text" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span>{cat.icono}</span>
+                      <span>{cat.nombre}</span>
+                      {formData.categoriaPredominante === cat._id && (
+                        <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>⭐ Predominante</span>
+                      )}
+                    </span>
+                    {formData.categorias.includes(cat._id) && (
+                      <input
+                        type="radio"
+                        name="categoriaPredominante"
+                        value={cat._id}
+                        checked={formData.categoriaPredominante === cat._id}
+                        onChange={handleInputChange}
+                        style={{ marginLeft: 'auto' }}
+                        title="Marcar como categoría predominante"
+                      />
+                    )}
+                  </label>
                 ))}
-              </select>
+                {categorias.length === 0 && (
+                  <p style={{ fontSize: '0.85rem', opacity: 0.6 }}>No hay categorías disponibles</p>
+                )}
+              </div>
             </div>
 
             <div className="detail-item">
@@ -338,6 +508,13 @@ const EventoForm = () => {
 
             <div className="detail-item">
               <strong>Color</strong>
+              <p style={{ fontSize: '0.85rem', opacity: 0.8, marginBottom: '0.5rem' }}>
+                {formData.categoriaPredominante && !formData.colorManual 
+                  ? `Color automático desde categoría predominante. Puedes cambiarlo manualmente.`
+                  : formData.colorManual
+                    ? 'Color personalizado (no se actualizará automáticamente)'
+                    : 'Selecciona una categoría predominante para obtener el color automáticamente'}
+              </p>
               <div className="form-row">
                 <input
                   type="color"
@@ -345,6 +522,7 @@ const EventoForm = () => {
                   name="color"
                   value={formData.color}
                   onChange={handleInputChange}
+                  data-manual-change="true"
                 />
                 <input
                   type="text"
@@ -353,6 +531,7 @@ const EventoForm = () => {
                   value={formData.color}
                   onChange={handleInputChange}
                   placeholder="#007bff"
+                  data-manual-change="true"
                 />
               </div>
             </div>

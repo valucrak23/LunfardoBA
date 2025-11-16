@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useContext } from 'react';
 import DataCacheContext from '../context/DataCacheContext';
+import { categoriasService } from '../services/categoriasService';
 import Loading from '../components/Loading';
 
 const EventoDetalle = () => {
@@ -8,23 +9,29 @@ const EventoDetalle = () => {
   const navigate = useNavigate();
   const { eventsById, getEventById } = useContext(DataCacheContext);
   const [evento, setEvento] = useState(null);
+  const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    loadCategorias();
     loadEvento();
   }, [id]);
+  
+  const loadCategorias = async () => {
+    try {
+      const response = await categoriasService.getAll();
+      setCategorias(response?.data || []);
+    } catch (error) {
+      console.error('Error al cargar categorías:', error);
+    }
+  };
 
   const loadEvento = async () => {
     try {
       setLoading(true);
-      // usar caché si existe, sino traer y guardar
-      const cached = eventsById?.[id];
-      if (cached && cached.descripcion) {
-        setEvento(cached);
-      } else {
-        const ev = await getEventById(id);
-        setEvento(ev);
-      }
+      // Forzar refresh para obtener datos frescos con categorías populadas
+      const ev = await getEventById(id, true);
+      setEvento(ev);
     } catch (error) {
       console.error('Error al cargar evento:', error);
     } finally {
@@ -151,12 +158,71 @@ const EventoDetalle = () => {
             <span>{formatearPrecio(evento.precio || (evento.esGratuito ? { esGratuito: true } : { monto: evento.precio }))}</span>
           </div>
 
-          {evento.categoria && (
-            <div className="detail-item">
-              <strong>Categoría</strong>
-              <span>{evento.categoria.icono} {evento.categoria.nombre}</span>
-            </div>
-          )}
+          {(() => {
+            // Obtener todas las categorías del evento
+            // Priorizar categorias[] sobre categoria (nuevo sistema vs antiguo)
+            let categoriasEvento = [];
+            
+            if (evento.categorias && Array.isArray(evento.categorias) && evento.categorias.length > 0) {
+              // Nuevo sistema: array de categorías
+              categoriasEvento = evento.categorias;
+            } else if (evento.categoria) {
+              // Sistema antiguo: solo una categoría
+              categoriasEvento = [evento.categoria];
+            }
+            
+            if (categoriasEvento.length === 0) return null;
+            
+            // Mapear categorías: si vienen como objetos populados, usarlas; si vienen como IDs, buscar en el array de categorías
+            const categoriasCompletas = categoriasEvento.map(cat => {
+              // Si ya es un objeto con _id y nombre, está populado
+              if (cat && typeof cat === 'object' && cat._id && cat.nombre) {
+                return cat;
+              }
+              // Si es un string (ID) o objeto con solo _id, buscar en categorías cargadas
+              const catId = typeof cat === 'string' ? cat : (cat?._id || cat);
+              if (catId) {
+                const categoriaEncontrada = categorias.find(c => c._id === catId);
+                return categoriaEncontrada || { _id: catId, nombre: 'Categoría', icono: '🏷️' };
+              }
+              return null;
+            }).filter(Boolean);
+            
+            if (categoriasCompletas.length === 0) return null;
+            
+            return (
+              <div className="detail-item">
+                <strong>Categorías</strong>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
+                  {categoriasCompletas.map((categoria, index) => {
+                    const catId = categoria._id;
+                    const esPredominante = evento.categoriaPredominante?._id === catId || 
+                                          evento.categoriaPredominante === catId ||
+                                          (index === 0 && !evento.categoriaPredominante && evento.categoria?._id === catId);
+                    return (
+                      <span 
+                        key={catId || index}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                          padding: '0.25rem 0.5rem',
+                          borderRadius: '0.5rem',
+                          background: esPredominante ? 'var(--neu-bg)' : 'transparent',
+                          border: esPredominante ? `2px solid ${evento.color || categoria.color || '#007bff'}` : '1px solid rgba(0,0,0,0.1)',
+                          fontSize: '0.9rem'
+                        }}
+                      >
+                        <span>{categoria.icono || '🏷️'}</span>
+                        <span>{categoria.nombre}</span>
+                        {esPredominante && <span style={{ fontSize: '0.75rem' }}>⭐</span>}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
 
           {(evento.informacionAdicional?.recomendaciones && evento.informacionAdicional.recomendaciones.length > 0) || evento.recomendaciones ? (
             <div className="detail-item">

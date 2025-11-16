@@ -34,7 +34,8 @@ const Eventos = () => {
   const loadEventos = async () => {
     try {
       setLoading(true);
-      const list = await loadEventsList(false);
+      // Forzar refresh para obtener datos actualizados con categorías populadas
+      const list = await loadEventsList(true);
       setEventos(Array.isArray(list) ? list : (eventsList || []));
     } catch (error) {
       setMsg('Error al cargar eventos: ' + error.message);
@@ -176,8 +177,15 @@ const Eventos = () => {
   const eventosFiltrados = eventos.filter(evento => {
     const matchTipo = filtroTipo === 'Todos' || 
       (evento.tipo && normalizarTipo(evento.tipo) === normalizarTipo(filtroTipo));
+    
+    // Filtrar por categoría: buscar en categorias[] o categoria (compatibilidad)
     const matchCategoria = filtroCategoria === 'Todas' || 
+      (evento.categorias && evento.categorias.some(cat => {
+        const catId = cat._id || cat;
+        return catId === filtroCategoria;
+      })) ||
       (evento.categoria?._id || evento.categoria) === filtroCategoria;
+    
     return matchTipo && matchCategoria;
   });
 
@@ -262,6 +270,56 @@ const Eventos = () => {
                   <p><strong>📅</strong> {formatearFecha(evento.fecha)} {evento.hora && `• ${evento.hora}`}</p>
                   <p><strong>📍</strong> {evento.ubicacion?.nombre || evento.nombreLugar || 'No especificado'}</p>
                   <p><strong>💰</strong> {formatearPrecio(evento.precio || (evento.esGratuito ? { esGratuito: true } : { monto: evento.precio }))}</p>
+                  {(() => {
+                    // Priorizar categorias[] sobre categoria
+                    let categoriasEvento = [];
+                    if (evento.categorias && Array.isArray(evento.categorias) && evento.categorias.length > 0) {
+                      categoriasEvento = evento.categorias;
+                    } else if (evento.categoria) {
+                      categoriasEvento = [evento.categoria];
+                    }
+                    
+                    if (categoriasEvento.length === 0) return null;
+                    
+                    // Mapear categorías: si vienen como objetos populados, usarlas; si vienen como IDs, buscar en categorías
+                    const categoriasCompletas = categoriasEvento.map(cat => {
+                      if (cat && typeof cat === 'object' && cat._id && cat.nombre) {
+                        return cat;
+                      }
+                      const catId = typeof cat === 'string' ? cat : (cat?._id || cat);
+                      if (catId) {
+                        const categoriaEncontrada = categorias.find(c => c._id === catId);
+                        return categoriaEncontrada || { _id: catId, nombre: 'Categoría', icono: '🏷️' };
+                      }
+                      return null;
+                    }).filter(Boolean);
+                    
+                    if (categoriasCompletas.length === 0) return null;
+                    
+                    const mostrarCategorias = categoriasCompletas.slice(0, 3);
+                    const totalCategorias = categoriasCompletas.length;
+                    
+                    return (
+                      <p style={{ marginTop: '0.5rem', fontSize: '0.85rem', display: 'flex', flexWrap: 'wrap', gap: '0.25rem', alignItems: 'center' }}>
+                        <strong>🏷️</strong>
+                        {mostrarCategorias.map((categoria, idx) => {
+                          const catId = categoria._id;
+                          const esPredominante = evento.categoriaPredominante?._id === catId || 
+                                                evento.categoriaPredominante === catId ||
+                                                (idx === 0 && !evento.categoriaPredominante && evento.categoria?._id === catId);
+                          return (
+                            <span key={catId || idx} style={{ fontSize: '0.8rem', opacity: 0.8 }}>
+                              {categoria.icono || '🏷️'} {categoria.nombre}
+                              {esPredominante && ' ⭐'}
+                            </span>
+                          );
+                        })}
+                        {totalCategorias > 3 && (
+                          <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>+{totalCategorias - 3} más</span>
+                        )}
+                      </p>
+                    );
+                  })()}
                 </div>
                 <div className="evento-actions">
                   <button onClick={() => navigate(`/evento/${evento._id}`)} className="btn-ver-detalle">Ver detalles</button>

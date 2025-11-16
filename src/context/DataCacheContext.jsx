@@ -70,11 +70,18 @@ export const DataCacheProvider = ({ children }) => {
   }, [eventsList]);
 
   // Obtener un evento por id: usa caché; si falta algún campo lo trae y lo guarda
-  const getEventById = useCallback(async (id) => {
+  const getEventById = useCallback(async (id, forceRefresh = false) => {
     if (!id) return null;
     const cached = eventsById[id];
-    if (cached && cached.descripcion && cached.ubicacion) {
-      return cached;
+    // Si forceRefresh es true o el evento no tiene categorías populadas, traer datos frescos
+    if (!forceRefresh && cached && cached.descripcion && cached.ubicacion) {
+      // Verificar si tiene categorías populadas (objetos con nombre)
+      const tieneCategoriasPopuladas = cached.categorias?.some(cat => 
+        cat && typeof cat === 'object' && cat._id && cat.nombre
+      ) || cached.categoria?.nombre;
+      if (tieneCategoriasPopuladas || !cached.categorias) {
+        return cached;
+      }
     }
     try {
       const response = await eventosService.getById(id);
@@ -83,8 +90,12 @@ export const DataCacheProvider = ({ children }) => {
       // y si no estaba en la lista, agregarlo superficialmente
       setEventsList(prev => {
         if (!Array.isArray(prev)) return [ev];
-        if (prev.some(e => e._id === id)) return prev;
-        return [...prev, ev];
+        const idx = prev.findIndex(e => e._id === id);
+        if (idx === -1) return [...prev, ev];
+        // Actualizar el evento en la lista con datos frescos
+        const next = [...prev];
+        next[idx] = { ...next[idx], ...ev };
+        return next;
       });
       return ev;
     } catch (err) {
