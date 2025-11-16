@@ -1,0 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@300;400&family=Montserrat:wght@400;700&display=swap');
+
+:root {
+  --negro: #2a2a2a;
+  --oscuro: #3a3a3a;
+
+  --app-grey: #e8e8e8;
+  --azul: #6b9bd1;
+  --azul-hover: #5a8bc0;
+  --verde: #7fb8a1;
+  --rosa: #d4a5b8;
+  --lila: #a8a8d0;
+  --laranja: #d4a574;
+  --amarelo: #d4c4a5;
+  
+  /* Colores más vibrantes pero relajantes */
+  --lila-vibrante: #9b7dd4;
+  --azul-vibrante: #7ba3d4;
+  --verde-vibrante: #8fc5a8;
+  --rosa-vibrante: #d89bb0;
+  
+  /* BB-8 Loader Colors */
+  --color-lines: #DDDDDD;
+  --color-bb8-main: #FFFFFF;
+  --color-bb8-orange: #FFA229;
+  --color-bb8-eye: #555555;
+
+  /* Neumorphic Design Variables - Colores Pastel */
+  --ruler: 16px;
+  --neu-bg: #FFF5F8;
+  --neu-shadow: rgba(233, 30, 99, 0.2);
+  --neu-white: #FFF0F5;
+  --neu-red: #AE1100;
+  --neu-text: #C2185B;
+
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  font-family: 'Archivo', sans-serif;
+  font-weight: 300;
+  box-sizing: border-box;
+}
+
+h1,
+h2,
+h3 {
+  font-family: 'Montserrat', sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  color: #2a2a2a;
+  background-color: var(--neu-bg);
+}
+
+body, p, input, select, textarea, button {
+  font-family: 'Montserrat', sans-serif;
+  letter-spacing: -0.2px;
+  font-size: var(--ruler);
+}
+
+button {
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.rounded {
+  border-radius: 100vh;
+}
