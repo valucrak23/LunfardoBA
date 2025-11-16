@@ -576,6 +576,24 @@ form hr {
   box-shadow: inset .2rem .2rem .5rem rgba(233, 30, 99, 0.1), inset -.2rem -.2rem .5rem var(--neu-white);
 }
 
+.ingresarA {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.ingresarA a {
+  color: var(--neu-text);
+  text-decoration: none;
+  font-size: 0.9rem;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.ingresarA a:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
 /* ========== FILTROS ========== */
 .filtros {
   display: flex;

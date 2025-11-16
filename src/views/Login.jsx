@@ -54,21 +54,40 @@ const Login = () => {
     return (
         <main className="container">
             <div className="form-wrapper">
-                <form onSubmit={ handleSubmit} className="login">
-                    <h1 className="form-title">Sign In</h1>
+                <form onSubmit={handleSubmit} className="login">
+                    <h1 className="form-title">Iniciar Sesión</h1>
                     <hr />
                     
                     <div className="input-wrapper">
-                        <input ref={emailRef} type="email" className="input-text" name="email" spellCheck="false" autoComplete="off" required />
+                        <input
+                            ref={emailRef}
+                            type="email"
+                            id="email"
+                            name="email"
+                            className="input-text"
+                            spellCheck="false"
+                            autoComplete="off"
+                            required
+                        />
                         <label className="input-label" htmlFor="email">Email</label>
                     </div>
 
                     <div className="input-wrapper">
-                        <input ref={passwordRef} type="password" className="input-text" name="password" spellCheck="false" autoComplete="off" required />
-                        <label className="input-label" htmlFor="password">Password</label>
+                        <input
+                            ref={passwordRef}
+                            type="password"
+                            id="password"
+                            name="password"
+                            className="input-text"
+                            spellCheck="false"
+                            autoComplete="off"
+                            required
+                        />
+                        <label className="input-label" htmlFor="password">Contraseña</label>
                     </div>
 
                     {msg && <div className="error-msg">{msg}</div>}
+                    
                     <button type="submit" className="submit-button" disabled={loading}>
                         {loading ? 'Ingresando...' : 'Ingresar'}
                     </button>

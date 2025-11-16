@@ -176,5 +176,3 @@ Alumnos: Agostina Cruz, Alfredo Cubillo, Valentina Ijelchuk
 Este proyecto fue desarrollado como parte del examen parcial 2 de la materia Aplicaciones Híbridas.
 
 ---
-
-**Nota**: Este proyecto utiliza una API externa alojada en `https://altadataba.onrender.com`. Asegúrate de que la API esté disponible para que la aplicación funcione correctamente.
