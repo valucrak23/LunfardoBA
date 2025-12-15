@@ -12,6 +12,7 @@ const Home = () => {
   const navigate = useNavigate();
   const [eventos, setEventos] = useState([]);
   const [categorias, setCategorias] = useState([]);
+  const [expandedCategorias, setExpandedCategorias] = useState({});
   const [loading, setLoading] = useState(true);
   const [filtroTipo, setFiltroTipo] = useState('Todos');
   const [filtroCategoria, setFiltroCategoria] = useState('Todas');
@@ -243,28 +244,76 @@ const Home = () => {
                       
                       if (categoriasCompletas.length === 0) return null;
                       
-                      const mostrarCategorias = categoriasCompletas.slice(0, 3);
                       const totalCategorias = categoriasCompletas.length;
+                      const categoriaPredominanteId =
+                        evento.categoriaPredominante?._id ||
+                        evento.categoriaPredominante ||
+                        evento.categoria?._id ||
+                        evento.categoria;
+
+                      // Ordenar para que la categoría predominante vaya primero
+                      const categoriasOrdenadas = [...categoriasCompletas].sort((a, b) => {
+                        const aId = a._id;
+                        const bId = b._id;
+                        if (!categoriaPredominanteId) return 0;
+                        if (aId === categoriaPredominanteId) return -1;
+                        if (bId === categoriaPredominanteId) return 1;
+                        return 0;
+                      });
+
+                      const isExpanded = !!expandedCategorias[evento._id];
+                      const limiteSinExpandir = 2;
+                      const restantesBase = Math.max(totalCategorias - limiteSinExpandir, 0);
+                      const mostrarCategorias = isExpanded
+                        ? categoriasOrdenadas
+                        : categoriasOrdenadas.slice(0, limiteSinExpandir);
                       
                       return (
-                        <p style={{ marginTop: '0.5rem', fontSize: '0.85rem', display: 'flex', flexWrap: 'wrap', gap: '0.25rem', alignItems: 'center' }}>
-                          <strong>🏷️</strong>
+                        <div className="evento-categorias">
+                          <div className="evento-categorias-header">
+                            <strong>🏷️ Categorías</strong>
+                          </div>
                           {mostrarCategorias.map((categoria, idx) => {
                             const catId = categoria._id;
-                            const esPredominante = evento.categoriaPredominante?._id === catId || 
-                                                  evento.categoriaPredominante === catId ||
-                                                  (idx === 0 && !evento.categoriaPredominante && evento.categoria?._id === catId);
+                            const esPredominante =
+                              categoriaPredominanteId &&
+                              (evento.categoriaPredominante?._id === catId ||
+                                evento.categoriaPredominante === catId ||
+                                categoriaPredominanteId === catId);
+
                             return (
-                              <span key={catId || idx} style={{ fontSize: '0.8rem', opacity: 0.8 }}>
-                                {categoria.icono || '🏷️'} {categoria.nombre}
-                                {esPredominante && ' ⭐'}
-                              </span>
+                              <div
+                                key={catId || idx}
+                                className={`evento-categoria-item${esPredominante ? ' evento-categoria-item--predominante' : ''}`}
+                              >
+                                <span className="evento-categoria-icon">
+                                  {categoria.icono || '🏷️'}
+                                </span>
+                                <span className="evento-categoria-nombre">
+                                  {categoria.nombre}
+                                  {esPredominante && ' 🌟'}
+                                </span>
+                              </div>
                             );
                           })}
-                          {totalCategorias > 3 && (
-                            <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>+{totalCategorias - 3} más</span>
+
+                          {totalCategorias > limiteSinExpandir && (
+                            <button
+                              type="button"
+                              className="btn-categorias-toggle"
+                              onClick={() =>
+                                setExpandedCategorias(prev => ({
+                                  ...prev,
+                                  [evento._id]: !prev[evento._id],
+                                }))
+                              }
+                            >
+                              {isExpanded
+                                ? 'Ver menos'
+                                : `+${restantesBase} categoría${restantesBase > 1 ? 's' : ''} más`}
+                            </button>
                           )}
-                        </p>
+                        </div>
                       );
                     })()}
                   </div>
